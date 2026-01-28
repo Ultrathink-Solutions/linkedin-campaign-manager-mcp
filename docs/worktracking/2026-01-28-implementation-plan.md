@@ -9,9 +9,17 @@
 
 ## Progress Log
 
-### 2026-01-28 - Project Scaffolding Complete
+### 2026-01-28 - Awaiting LinkedIn API Approval
 
-**Completed:**
+**Status:** ⏳ Blocked - Waiting for LinkedIn Advertising API access approval
+
+**LinkedIn Developer App:**
+- App Name: Ultrathink Ads MCP Server
+- Client ID: `78d4zb60f652yc`
+- Created: Jan 28, 2026
+- Advertising API Access: Requested, pending approval (typically 1-3 business days)
+
+**Completed Today:**
 - [x] Research LinkedIn Marketing API capabilities, access tiers, rate limits
 - [x] Research MCP server best practices (FastMCP, OAuth patterns)
 - [x] Define simplified architecture (self-hosted, stdio, token-in-env)
@@ -25,17 +33,31 @@
 - [x] Scaffold all tool handlers (accounts, campaigns, creatives, analytics, targeting)
 - [x] Write unit tests for config, errors, formatters
 - [x] Create README and LICENSE
-
-**Next:**
 - [x] Install dependencies and verify build
 - [x] Run tests and fix any issues
 - [x] Fix lint errors (no-useless-escape, no-floating-promises)
 - [x] Fix type error (patchSetEntity -> patchSetObject)
-- [x] Address strict-boolean-expressions warnings (PR #2)
+- [x] Address strict-boolean-expressions warnings (PR #2 - merged)
 - [x] Fix empty string validation for URN parameters (CodeRabbit feedback)
-- [ ] Test against real LinkedIn API (requires access token)
+- [x] Add OAuth helper script `npm run auth` (PR #3 - open)
+- [x] Set up direnv for local development credentials
+- [x] Add redirect URL to LinkedIn app (`http://localhost:8080/callback`)
+
+**Merged PRs:**
+- PR #1: Phase 1 Foundation - Build verification and bug fixes
+- PR #2: Fix all strict-boolean-expressions lint warnings
+
+**Open PRs:**
+- PR #3: Add OAuth helper script for easier token generation
+
+**Blocked - Waiting for API Approval:**
+- [ ] Test against real LinkedIn API (requires `r_ads`, `rw_ads`, `r_ads_reporting` scopes)
 - [ ] Refine tool implementations based on actual API responses
+
+**Ready to Do (not blocked):**
+- [ ] Merge PR #3 (OAuth helper)
 - [ ] Create CI/CD workflow (GitHub Actions)
+- [ ] Update package.json metadata (repo URLs, author)
 - [ ] Prepare for npm publish
 
 ---
