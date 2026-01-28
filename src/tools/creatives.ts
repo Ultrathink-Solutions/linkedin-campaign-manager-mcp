@@ -19,7 +19,7 @@ export async function listCreatives(
 
   const queryParams: Record<string, unknown> = {};
 
-  if (campaignId !== undefined) {
+  if (campaignId !== undefined && campaignId.trim() !== '') {
     queryParams['search.campaign.values[0]'] = buildUrn('sponsoredCampaign', campaignId);
   }
 
@@ -76,7 +76,7 @@ export async function createCreative(
 
   // Build type-specific creative variables
   if (params.type === 'TEXT_AD') {
-    if (params.title === undefined) {
+    if (params.title === undefined || params.title.trim() === '') {
       throw new Error('Title is required for TEXT_AD creatives');
     }
     entity.variables = {
