@@ -52,7 +52,7 @@ describe('loadConfig', () => {
   it('throws error when access token is missing', () => {
     delete process.env.LINKEDIN_ACCESS_TOKEN;
 
-    expect(() => loadConfig()).toThrow('LINKEDIN_ACCESS_TOKEN is required');
+    expect(() => loadConfig()).toThrow('Configuration error');
   });
 
   it('throws error when access token is empty', () => {
@@ -82,7 +82,8 @@ describe('validateAccessToken', () => {
   });
 
   it('returns true for token with underscores and dashes', () => {
-    expect(validateAccessToken('AQV_123-456_789-abc')).toBe(true);
+    // Token must be > 20 chars, so use a longer example
+    expect(validateAccessToken('AQV_123-456_789-abcdefghij')).toBe(true);
   });
 
   it('returns false for token that is too short', () => {

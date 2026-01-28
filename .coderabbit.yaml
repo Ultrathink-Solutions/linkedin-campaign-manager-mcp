@@ -1,0 +1,204 @@
+# CodeRabbit Configuration for LinkedIn Campaign Manager MCP
+# Docs: https://docs.coderabbit.ai/reference/configuration
+#
+# Technology Stack:
+# - Runtime: Node.js 18+, TypeScript 5.4+
+# - Framework: FastMCP (Model Context Protocol)
+# - Validation: Zod
+# - LinkedIn API: linkedin-api-client (official SDK)
+# - Testing: Vitest
+
+language: en-US
+
+# ==============================================================================
+# REVIEW SETTINGS
+# ==============================================================================
+reviews:
+  # Review profile: "chill" for fewer comments, "assertive" for thorough reviews
+  profile: assertive
+
+  # Enable blocking behavior via CHANGES_REQUESTED
+  request_changes_workflow: true
+
+  # Report commit status to GitHub (pending/success/failure)
+  commit_status: true
+
+  # High-level summary in PR description
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+
+  # Suggest labels and reviewers
+  suggested_labels: true
+  suggested_reviewers: false
+
+  # Poem in review (disabled for professional reviews)
+  poem: false
+
+  # Auto-review settings
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+      - "DRAFT"
+
+  # ---------------------------------------------------------------------------
+  # PATH FILTERS - Files to ignore during review
+  # ---------------------------------------------------------------------------
+  path_filters:
+    # Dependencies and lock files
+    - "!**/package-lock.json"
+    - "!**/node_modules/**"
+
+    # Build output
+    - "!**/dist/**"
+    - "!**/*.d.ts"
+    - "!**/*.js.map"
+
+    # Coverage reports
+    - "!**/coverage/**"
+
+    # IDE and tool configs
+    - "!**/.idea/**"
+    - "!**/.vscode/**"
+
+  # ---------------------------------------------------------------------------
+  # PATH INSTRUCTIONS - Custom review guidelines per file pattern
+  # ---------------------------------------------------------------------------
+  path_instructions:
+    # =========================================================================
+    # TYPESCRIPT SOURCE FILES
+    # =========================================================================
+    - path: "src/**/*.ts"
+      instructions: |
+        TYPESCRIPT MCP SERVER REVIEW RULES:
+
+        1. TYPE SAFETY - CRITICAL:
+           - Avoid `any` type - require justification comment if used
+           - All public functions must have explicit return types
+           - Use Zod schemas for runtime validation of external data
+           - Prefer `unknown` over `any` for untyped external data
+
+        2. ERROR HANDLING:
+           - Use custom error classes from errors.ts
+           - Transform API errors with transformError()
+           - Include actionable context in error messages
+           - Handle rate limits with retry logic
+
+        3. LINKEDIN API CLIENT:
+           - Use the official linkedin-api-client SDK
+           - Include proper version headers (Linkedin-Version, X-Restli-Protocol-Version)
+           - Handle URN encoding correctly
+           - Respect rate limits
+
+        4. MCP TOOL DESIGN:
+           - Tool descriptions should be clear for LLM consumption
+           - Parameters should have descriptive Zod schemas with .describe()
+           - Return JSON strings for structured data
+           - Handle missing/optional parameters gracefully
+
+        5. CODE STYLE:
+           - Follow ESLint rules (TypeScript strict mode)
+           - Use explicit boolean checks for nullable values
+           - Prefer const over let
+           - Use async/await consistently
+
+    # =========================================================================
+    # TOOL HANDLERS
+    # =========================================================================
+    - path: "src/tools/**/*.ts"
+      instructions: |
+        MCP TOOL HANDLER REVIEW RULES:
+
+        1. INPUT VALIDATION:
+           - Parse input with Zod schema at function start
+           - Extract validated properties immediately after parse
+           - Handle validation errors gracefully
+
+        2. LINKEDIN API CALLS:
+           - Use LinkedInClient methods, not direct HTTP calls
+           - Transform inputs to LinkedIn API format (URNs, money amounts, dates)
+           - Use formatters from utils/formatters.ts for response transformation
+
+        3. RESPONSE FORMAT:
+           - Return JSON.stringify() for structured responses
+           - Include helpful summary fields (count, message)
+           - Format dates and money amounts consistently
+
+        4. ERROR MESSAGES:
+           - Include operation context (what was attempted)
+           - Include identifiers (accountId, campaignId, etc.)
+           - Suggest next steps when appropriate
+
+    # =========================================================================
+    # TEST FILES
+    # =========================================================================
+    - path: "tests/**/*.ts"
+      instructions: |
+        TEST REVIEW RULES:
+
+        1. TEST SCOPE - CRITICAL:
+           - Test OUR business logic, not third-party libraries
+           - DO NOT test that linkedin-api-client makes correct HTTP calls
+           - DO NOT test that Zod validates schemas correctly
+           - DO test input transformation, output formatting, error handling
+
+        2. MOCKING:
+           - Mock the LinkedInClient, not axios/fetch
+           - Use vi.fn() for mock functions
+           - Verify mock calls to ensure correct parameters
+
+        3. TEST STRUCTURE:
+           - Group tests logically with describe()
+           - Test happy path and error paths
+           - Use descriptive test names
+
+    # =========================================================================
+    # CONFIGURATION FILES
+    # =========================================================================
+    - path: "*.json"
+      instructions: |
+        CONFIGURATION REVIEW RULES:
+
+        - package.json: Verify version bumps are appropriate
+        - tsconfig.json: Maintain strict mode settings
+        - Verify no sensitive data in config files
+
+  # ---------------------------------------------------------------------------
+  # TOOLS - Static analysis integrations
+  # ---------------------------------------------------------------------------
+  tools:
+    # TypeScript/JavaScript linting
+    eslint:
+      enabled: true
+
+    # Security - secret scanning
+    gitleaks:
+      enabled: true
+
+    # YAML validation
+    yamllint:
+      enabled: true
+
+# ==============================================================================
+# CHAT SETTINGS
+# ==============================================================================
+chat:
+  auto_reply: true
+
+# ==============================================================================
+# KNOWLEDGE BASE
+# ==============================================================================
+knowledge_base:
+  # Learn from feedback
+  learnings:
+    scope: global
+
+  # Issue integration scope
+  issues:
+    scope: auto
+
+  # Auto-detect coding guidelines from CLAUDE.md, etc.
+  code_guidelines:
+    enabled: true

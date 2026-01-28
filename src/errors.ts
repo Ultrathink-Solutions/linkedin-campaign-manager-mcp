@@ -98,7 +98,21 @@ export class ConfigurationError extends Error {
  * Transform an unknown error (from linkedin-api-client or axios) into our error types
  */
 export function transformError(error: unknown): Error {
-  // Handle axios-style errors
+  // If it's already one of our custom errors, return it unchanged
+  if (error instanceof LinkedInApiError) {
+    return error;
+  }
+
+  if (error instanceof ValidationError) {
+    return error;
+  }
+
+  // If it's already a standard Error (but not our custom types), return it
+  if (error instanceof Error && !isAxiosError(error)) {
+    return error;
+  }
+
+  // Handle axios-style errors (have response object)
   if (isAxiosError(error)) {
     const status = error.response?.status ?? 500;
     const data = error.response?.data as Record<string, unknown> | undefined;
@@ -122,21 +136,14 @@ export function transformError(error: unknown): Error {
     }
   }
 
-  // If it's already one of our errors, return it
-  if (error instanceof LinkedInApiError || error instanceof ValidationError) {
-    return error;
-  }
-
-  // Unknown error type
-  if (error instanceof Error) {
-    return error;
-  }
-
+  // Unknown error type - wrap in Error
   return new Error(String(error));
 }
 
 /**
- * Type guard for axios-style errors
+ * Type guard for axios-style errors.
+ * Only matches objects with a 'response' property (not just 'message',
+ * since all Error objects have message).
  */
 function isAxiosError(
   error: unknown
@@ -144,6 +151,6 @@ function isAxiosError(
   return (
     typeof error === 'object' &&
     error !== null &&
-    ('response' in error || 'message' in error)
+    'response' in error
   );
 }
