@@ -38,12 +38,37 @@ npm install -g linkedin-campaign-manager-mcp
 
 ### 2. Generate an Access Token
 
-Generate a token with the following scopes:
+The easiest way is using the included auth helper (for developers):
+
+```bash
+# Clone and setup
+git clone https://github.com/Ultrathink-Solutions/linkedin-campaign-manager-mcp.git
+cd linkedin-campaign-manager-mcp
+npm install
+
+# Create .envrc with your credentials
+cat > .envrc << 'EOF'
+export LINKEDIN_CLIENT_ID="your-client-id"
+export LINKEDIN_CLIENT_SECRET="your-client-secret"
+EOF
+
+# Allow direnv and run auth
+direnv allow
+npm run auth
+```
+
+This will:
+1. Open your browser to LinkedIn's authorization page
+2. After you authorize, capture the callback automatically
+3. Exchange the code for an access token
+4. Save the token to your `.envrc`
+
+**Alternative**: Use LinkedIn's [OAuth tools in the Developer Portal](https://learn.microsoft.com/en-us/linkedin/shared/authentication/developer-portal-tools) or implement the [3-legged OAuth flow](https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow) manually.
+
+Required scopes:
 - `r_ads` - Read ad accounts, campaigns, creatives
 - `rw_ads` - Write access for creating/updating
 - `r_ads_reporting` - Analytics and reporting
-
-You can use LinkedIn's OAuth tools in the Developer Portal or implement the [3-legged OAuth flow](https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow).
 
 ### 3. Configure Claude Desktop
 
@@ -125,11 +150,17 @@ LinkedIn access tokens expire after 60 days. When your token expires:
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/linkedin-campaign-manager-mcp.git
+git clone https://github.com/Ultrathink-Solutions/linkedin-campaign-manager-mcp.git
 cd linkedin-campaign-manager-mcp
 
 # Install dependencies
 npm install
+
+# Setup credentials (create .envrc with LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET)
+direnv allow
+
+# Generate access token (opens browser for OAuth)
+npm run auth
 
 # Run tests
 npm test
