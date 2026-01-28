@@ -20,6 +20,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "auth": "tsx scripts/auth.ts",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
@@ -61,6 +62,7 @@
     "@vitest/coverage-v8": "^2.0.0",
     "eslint": "^8.57.0",
     "prettier": "^3.2.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.4.0",
     "vitest": "^2.0.0"
   }
