@@ -141,7 +141,9 @@ export function transformError(error: unknown): Error {
 }
 
 /**
- * Type guard for axios-style errors
+ * Type guard for axios-style errors.
+ * Only matches objects with a 'response' property (not just 'message',
+ * since all Error objects have message).
  */
 function isAxiosError(
   error: unknown
@@ -149,6 +151,6 @@ function isAxiosError(
   return (
     typeof error === 'object' &&
     error !== null &&
-    ('response' in error || 'message' in error)
+    'response' in error
   );
 }
