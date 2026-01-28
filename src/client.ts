@@ -142,7 +142,7 @@ export class LinkedInClient {
 
         // Only retry on rate limit errors
         if (lastError instanceof RateLimitError && attempt < maxRetries) {
-          const waitTime = lastError.retryAfter
+          const waitTime = lastError.retryAfter !== undefined
             ? lastError.retryAfter * 1000
             : Math.pow(2, attempt) * 1000; // Exponential backoff
 

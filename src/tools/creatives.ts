@@ -19,7 +19,7 @@ export async function listCreatives(
 
   const queryParams: Record<string, unknown> = {};
 
-  if (campaignId) {
+  if (campaignId !== undefined) {
     queryParams['search.campaign.values[0]'] = buildUrn('sponsoredCampaign', campaignId);
   }
 
@@ -76,7 +76,7 @@ export async function createCreative(
 
   // Build type-specific creative variables
   if (params.type === 'TEXT_AD') {
-    if (!params.title) {
+    if (params.title === undefined) {
       throw new Error('Title is required for TEXT_AD creatives');
     }
     entity.variables = {
@@ -95,7 +95,7 @@ export async function createCreative(
       data: {
         'com.linkedin.ads.SponsoredUpdateCreativeVariables': {
           activity: params.text,
-          ...(params.imageUrl && { media: params.imageUrl }),
+          ...(params.imageUrl !== undefined ? { media: params.imageUrl } : {}),
         },
       },
     };

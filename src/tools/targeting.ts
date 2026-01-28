@@ -67,7 +67,7 @@ export async function searchTargetingEntities(
     count: limit,
   };
 
-  if (query) {
+  if (query !== undefined) {
     queryParams.query = query;
   }
 
@@ -108,19 +108,19 @@ export async function estimateAudience(
     'target.includedTargetingFacets.locations': params.includedLocations,
   };
 
-  if (params.includedIndustries?.length) {
+  if (params.includedIndustries !== undefined && params.includedIndustries.length > 0) {
     queryParams['target.includedTargetingFacets.industries'] = params.includedIndustries;
   }
 
-  if (params.includedSeniorities?.length) {
+  if (params.includedSeniorities !== undefined && params.includedSeniorities.length > 0) {
     queryParams['target.includedTargetingFacets.seniorities'] = params.includedSeniorities;
   }
 
-  if (params.includedJobFunctions?.length) {
+  if (params.includedJobFunctions !== undefined && params.includedJobFunctions.length > 0) {
     queryParams['target.includedTargetingFacets.jobFunctions'] = params.includedJobFunctions;
   }
 
-  if (params.excludedSeniorities?.length) {
+  if (params.excludedSeniorities !== undefined && params.excludedSeniorities.length > 0) {
     queryParams['target.excludingTargetingFacets.seniorities'] = params.excludedSeniorities;
   }
 

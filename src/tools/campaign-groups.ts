@@ -52,10 +52,10 @@ export async function createCampaignGroup(
     entity.totalBudget = buildMoneyAmount(params.totalBudget);
   }
 
-  if (params.startDate || params.endDate) {
+  if (params.startDate !== undefined || params.endDate !== undefined) {
     entity.runSchedule = {
-      ...(params.startDate && { start: dateToEpochMs(params.startDate) }),
-      ...(params.endDate && { end: dateToEpochMs(params.endDate) }),
+      ...(params.startDate !== undefined ? { start: dateToEpochMs(params.startDate) } : {}),
+      ...(params.endDate !== undefined ? { end: dateToEpochMs(params.endDate) } : {}),
     };
   }
 
