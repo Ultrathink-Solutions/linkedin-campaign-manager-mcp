@@ -19,11 +19,11 @@ export async function listCampaigns(
 
   const queryParams: Record<string, unknown> = {};
 
-  if (status) {
+  if (status !== undefined) {
     queryParams['search.status.values[0]'] = status;
   }
 
-  if (campaignGroupId) {
+  if (campaignGroupId !== undefined) {
     queryParams['search.campaignGroup.values[0]'] = buildUrn('sponsoredCampaignGroup', campaignGroupId);
   }
 
@@ -81,16 +81,16 @@ export async function createCampaign(
     type: 'SPONSORED_UPDATES', // Default campaign type
   };
 
-  if (params.campaignGroupId) {
+  if (params.campaignGroupId !== undefined) {
     entity.campaignGroup = buildUrn('sponsoredCampaignGroup', params.campaignGroupId);
   }
 
-  if (params.startDate) {
+  if (params.startDate !== undefined) {
     entity.runSchedule = {
       start: dateToEpochMs(params.startDate),
-      ...(params.endDate && { end: dateToEpochMs(params.endDate) }),
+      ...(params.endDate !== undefined ? { end: dateToEpochMs(params.endDate) } : {}),
     };
-  } else if (params.endDate) {
+  } else if (params.endDate !== undefined) {
     entity.runSchedule = {
       start: Date.now(),
       end: dateToEpochMs(params.endDate),

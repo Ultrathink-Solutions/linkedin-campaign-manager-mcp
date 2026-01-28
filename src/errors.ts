@@ -127,7 +127,7 @@ export function transformError(error: unknown): Error {
         const retryAfter = error.response?.headers?.['retry-after'];
         return new RateLimitError(
           message,
-          retryAfter ? parseInt(retryAfter as string, 10) : undefined,
+          retryAfter !== undefined ? parseInt(retryAfter as string, 10) : undefined,
           data
         );
       }

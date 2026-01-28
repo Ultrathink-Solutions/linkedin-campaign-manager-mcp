@@ -70,7 +70,7 @@ export async function getAnalytics(
     const result: Record<string, unknown> = {};
 
     // Extract pivot value
-    if (element.pivotValue) {
+    if (element.pivotValue !== undefined) {
       result.pivotValue = element.pivotValue;
     }
 
@@ -85,11 +85,11 @@ export async function getAnalytics(
     const impressions = element.impressions as number | undefined;
     const clicks = element.clicks as number | undefined;
 
-    if (impressions && clicks && impressions > 0) {
+    if (impressions !== undefined && clicks !== undefined && impressions > 0) {
       result.ctr = ((clicks / impressions) * 100).toFixed(2) + '%';
     }
 
-    if (element.costInLocalCurrency && clicks && clicks > 0) {
+    if (element.costInLocalCurrency !== undefined && clicks !== undefined && clicks > 0) {
       const cost = element.costInLocalCurrency as Record<string, unknown>;
       const costAmount = parseFloat(cost.amount as string);
       result.averageCpc = {
