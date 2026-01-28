@@ -58,4 +58,4 @@ for (const [name, tool] of Object.entries(allTools)) {
 }
 
 // Start the server
-server.start({ transportType: 'stdio' });
+void server.start({ transportType: 'stdio' });

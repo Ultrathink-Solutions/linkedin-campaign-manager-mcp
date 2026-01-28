@@ -41,6 +41,6 @@ export function loadConfig(): Config {
  * This is a basic check - actual validation happens when the API is called.
  */
 export function validateAccessToken(token: string): boolean {
-  // LinkedIn access tokens typically start with 'AQ' and are base64-ish
+  // LinkedIn access tokens typically start with 'AQ' and contain alphanumeric chars, underscores, dashes
   return token.length > 20 && /^[A-Za-z0-9_-]+$/.test(token);
 }

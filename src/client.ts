@@ -105,7 +105,7 @@ export class LinkedInClient {
     return this.executeWithRetry(async () => {
       await this.restliClient.partialUpdate({
         resourcePath: `${resourcePath}/${id}`,
-        patchSetEntity: patchSet,
+        patchSetObject: patchSet,
         accessToken: this.accessToken,
         versionString: this.apiVersion,
       });
