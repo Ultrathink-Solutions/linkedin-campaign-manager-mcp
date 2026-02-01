@@ -63,8 +63,13 @@ describe('Campaign Group Tools', () => {
       expect(parsed.campaignGroups[1].totalBudget).toBeUndefined();
     });
 
-    it('rejects missing accountId', async () => {
-      await expect(listCampaignGroups({}, mockClient)).rejects.toThrow();
+    it('propagates client errors', async () => {
+      const apiError = new Error('LinkedIn API unavailable');
+      vi.mocked(mockClient.finder).mockRejectedValue(apiError);
+
+      await expect(
+        listCampaignGroups({ accountId: '456' }, mockClient)
+      ).rejects.toThrow(apiError);
     });
   });
 
