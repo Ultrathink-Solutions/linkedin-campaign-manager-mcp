@@ -83,7 +83,7 @@ export async function listPosts(
 
   const authorUrn = buildUrn('organization', organizationId);
 
-  const response = await client.finder<{ elements: Record<string, unknown>[] }>(
+  const response = await client.finder<{ elements?: Record<string, unknown>[] }>(
     '/posts',
     'author',
     {
@@ -94,7 +94,9 @@ export async function listPosts(
     }
   );
 
-  const posts = response.elements.map(formatPost);
+  // Defensively handle missing or undefined elements array
+  const elements = response.elements ?? [];
+  const posts = elements.map(formatPost);
 
   return JSON.stringify(
     {

@@ -399,6 +399,8 @@ export const GetOrganizationInputSchema = z.object({
 // Organization Statistics Response Types
 export interface ShareStatistics {
   organizationId: string;
+  /** False if no statistics data was returned from the API */
+  dataAvailable: boolean;
   totalStats: {
     impressions: number;
     uniqueImpressions: number;
@@ -425,6 +427,8 @@ export interface ShareStatistics {
 
 export interface FollowerStatistics {
   organizationId: string;
+  /** False if no statistics data was returned from the API */
+  dataAvailable: boolean;
   totalFollowers: number;
   organicFollowers: number;
   paidFollowers: number;

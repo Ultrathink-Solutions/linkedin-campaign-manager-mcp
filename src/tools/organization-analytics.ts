@@ -11,6 +11,62 @@ import {
 } from '../types.js';
 import { buildUrn, dateToEpochMs, epochMsToIso } from '../utils/formatters.js';
 
+// ============================================================================
+// Zod Schemas for LinkedIn API Response Validation
+// ============================================================================
+
+/**
+ * Schema for totalShareStatistics from LinkedIn API
+ */
+const TotalShareStatisticsSchema = z.object({
+  impressionCount: z.number().optional(),
+  uniqueImpressionsCount: z.number().optional(),
+  clickCount: z.number().optional(),
+  likeCount: z.number().optional(),
+  commentCount: z.number().optional(),
+  shareCount: z.number().optional(),
+  engagement: z.number().optional(),
+});
+
+/**
+ * Schema for share statistics element from LinkedIn API
+ */
+const ShareStatisticsElementSchema = z.object({
+  totalShareStatistics: TotalShareStatisticsSchema.optional(),
+});
+
+/**
+ * Schema for follower counts from LinkedIn API
+ */
+const FollowerCountsSchema = z.object({
+  organicFollowerCount: z.number().optional(),
+  paidFollowerCount: z.number().optional(),
+});
+
+/**
+ * Schema for demographic item from LinkedIn API
+ */
+const DemographicItemSchema = z.object({
+  function: z.string().optional(),
+  seniority: z.string().optional(),
+  industry: z.string().optional(),
+  geo: z.string().optional(),
+  staffCountRange: z.string().optional(),
+  followerCounts: FollowerCountsSchema.optional(),
+});
+
+/**
+ * Schema for follower statistics element from LinkedIn API
+ */
+const FollowerStatisticsElementSchema = z.object({
+  followerCounts: FollowerCountsSchema.optional(),
+  followerCountsByFunction: z.array(DemographicItemSchema).optional(),
+  followerCountsBySeniority: z.array(DemographicItemSchema).optional(),
+  followerCountsByIndustry: z.array(DemographicItemSchema).optional(),
+  followerCountsByGeoCountry: z.array(DemographicItemSchema).optional(),
+  followerCountsByStaffCountRange: z.array(DemographicItemSchema).optional(),
+});
+
 /**
  * Get share/post statistics for an organization.
  * Returns engagement metrics: impressions, clicks, likes, comments, shares.
@@ -49,26 +105,37 @@ export async function getShareStatistics(
     };
   }
 
-  const response = await client.finder<{ elements: Record<string, unknown>[] }>(
+  const response = await client.finder<{ elements?: Record<string, unknown>[] }>(
     '/organizationalEntityShareStatistics',
     'organizationalEntity',
     queryParams
   );
 
-  // Format the response
-  const stats = response.elements[0] ?? {};
-  const totalStats = stats.totalShareStatistics as Record<string, unknown> | undefined;
+  // Handle empty or missing elements array
+  const elements = response.elements ?? [];
+  const hasData = elements.length > 0;
+  const rawStats = elements[0];
+
+  // Validate the response element with Zod schema
+  const parseResult = rawStats !== undefined
+    ? ShareStatisticsElementSchema.safeParse(rawStats)
+    : { success: true as const, data: {} };
+
+  // Use validated data or empty defaults
+  const validated = parseResult.success ? parseResult.data : {};
+  const totalStats = validated.totalShareStatistics;
 
   const result: ShareStatistics = {
     organizationId,
+    dataAvailable: hasData,
     totalStats: {
-      impressions: (totalStats?.impressionCount as number) ?? 0,
-      uniqueImpressions: (totalStats?.uniqueImpressionsCount as number) ?? 0,
-      clicks: (totalStats?.clickCount as number) ?? 0,
-      likes: (totalStats?.likeCount as number) ?? 0,
-      comments: (totalStats?.commentCount as number) ?? 0,
-      shares: (totalStats?.shareCount as number) ?? 0,
-      engagement: (totalStats?.engagement as number) ?? 0,
+      impressions: totalStats?.impressionCount ?? 0,
+      uniqueImpressions: totalStats?.uniqueImpressionsCount ?? 0,
+      clicks: totalStats?.clickCount ?? 0,
+      likes: totalStats?.likeCount ?? 0,
+      comments: totalStats?.commentCount ?? 0,
+      shares: totalStats?.shareCount ?? 0,
+      engagement: totalStats?.engagement ?? 0,
     },
   };
 
@@ -121,32 +188,45 @@ export async function getFollowerStatistics(
     };
   }
 
-  const response = await client.finder<{ elements: Record<string, unknown>[] }>(
+  const response = await client.finder<{ elements?: Record<string, unknown>[] }>(
     '/organizationalEntityFollowerStatistics',
     'organizationalEntity',
     queryParams
   );
 
-  const stats = response.elements[0] ?? {};
+  // Handle empty or missing elements array
+  const elements = response.elements ?? [];
+  const hasData = elements.length > 0;
+  const rawStats = elements[0];
 
-  // Extract follower counts
-  const followerCounts = stats.followerCounts as Record<string, unknown> | undefined;
-  const organicCount = (followerCounts?.organicFollowerCount as number) ?? 0;
-  const paidCount = (followerCounts?.paidFollowerCount as number) ?? 0;
+  // Validate the response element with Zod schema
+  const parseResult = rawStats !== undefined
+    ? FollowerStatisticsElementSchema.safeParse(rawStats)
+    : { success: true as const, data: {} };
+
+  // Use validated data or empty defaults
+  const validated = parseResult.success ? parseResult.data : {};
+
+  // Extract follower counts from validated data
+  const organicCount = validated.followerCounts?.organicFollowerCount ?? 0;
+  const paidCount = validated.followerCounts?.paidFollowerCount ?? 0;
 
   const result: FollowerStatistics = {
     organizationId,
+    dataAvailable: hasData,
     totalFollowers: organicCount + paidCount,
     organicFollowers: organicCount,
     paidFollowers: paidCount,
   };
 
-  // Extract demographics if available
-  const followerCountsByFunction = stats.followerCountsByFunction as Record<string, unknown>[] | undefined;
-  const followerCountsBySeniority = stats.followerCountsBySeniority as Record<string, unknown>[] | undefined;
-  const followerCountsByIndustry = stats.followerCountsByIndustry as Record<string, unknown>[] | undefined;
-  const followerCountsByGeoCountry = stats.followerCountsByGeoCountry as Record<string, unknown>[] | undefined;
-  const followerCountsByStaffCountRange = stats.followerCountsByStaffCountRange as Record<string, unknown>[] | undefined;
+  // Extract demographics from validated data if available
+  const {
+    followerCountsByFunction,
+    followerCountsBySeniority,
+    followerCountsByIndustry,
+    followerCountsByGeoCountry,
+    followerCountsByStaffCountRange,
+  } = validated;
 
   if (
     followerCountsByFunction !== undefined ||
@@ -249,27 +329,44 @@ export async function getOrganization(
 }
 
 /**
- * Helper to extract demographic counts from LinkedIn's format
+ * Helper to extract demographic counts from LinkedIn's format.
+ * Uses defensive type checking to handle unexpected data shapes.
  */
-function extractDemographicCounts(items: Record<string, unknown>[]): Record<string, number> {
+function extractDemographicCounts(items: z.infer<typeof DemographicItemSchema>[]): Record<string, number> {
   const result: Record<string, number> = {};
 
   for (const item of items) {
-    // LinkedIn returns URNs or names as keys
-    const key = (item.function as string) ??
-      (item.seniority as string) ??
-      (item.industry as string) ??
-      (item.geo as string) ??
-      (item.staffCountRange as string) ??
-      'unknown';
+    // Defensively determine the key by checking each field's type
+    let key = 'unknown';
+    if (typeof item.function === 'string' && item.function !== '') {
+      key = item.function;
+    } else if (typeof item.seniority === 'string' && item.seniority !== '') {
+      key = item.seniority;
+    } else if (typeof item.industry === 'string' && item.industry !== '') {
+      key = item.industry;
+    } else if (typeof item.geo === 'string' && item.geo !== '') {
+      key = item.geo;
+    } else if (typeof item.staffCountRange === 'string' && item.staffCountRange !== '') {
+      key = item.staffCountRange;
+    }
 
-    const followerCounts = item.followerCounts as Record<string, unknown> | undefined;
-    const count = ((followerCounts?.organicFollowerCount as number) ?? 0) +
-      ((followerCounts?.paidFollowerCount as number) ?? 0);
+    // Defensively extract follower counts with type checking
+    const followerCounts = item.followerCounts;
+    const organicCount = typeof followerCounts?.organicFollowerCount === 'number'
+      ? followerCounts.organicFollowerCount
+      : 0;
+    const paidCount = typeof followerCounts?.paidFollowerCount === 'number'
+      ? followerCounts.paidFollowerCount
+      : 0;
+    const count = organicCount + paidCount;
 
-    // Extract readable name from URN if present
-    const readableKey = key.includes('urn:') ? key.split(':').pop() ?? key : key;
-    result[readableKey] = count;
+    // Extract readable name from URN if present (only if key is a string)
+    const readableKey = typeof key === 'string' && key.includes('urn:')
+      ? key.split(':').pop() ?? key
+      : key;
+
+    // Aggregate counts for the same key instead of overwriting
+    result[readableKey] = (result[readableKey] ?? 0) + count;
   }
 
   return result;
