@@ -134,7 +134,13 @@ export async function getFollowerStatistics(
   const followerCountsByGeoCountry = stats.followerCountsByGeoCountry as Record<string, unknown>[] | undefined;
   const followerCountsByStaffCountRange = stats.followerCountsByStaffCountRange as Record<string, unknown>[] | undefined;
 
-  if (followerCountsByFunction !== undefined || followerCountsBySeniority !== undefined) {
+  if (
+    followerCountsByFunction !== undefined ||
+    followerCountsBySeniority !== undefined ||
+    followerCountsByIndustry !== undefined ||
+    followerCountsByGeoCountry !== undefined ||
+    followerCountsByStaffCountRange !== undefined
+  ) {
     result.demographics = {};
 
     if (followerCountsByFunction !== undefined) {
@@ -180,13 +186,21 @@ export async function getOrganization(
   const logoV2 = response.logoV2 as Record<string, unknown> | undefined;
   const originalImage = logoV2?.original as string | undefined;
 
+  // Extract industries (array of URNs like "urn:li:industry:4")
+  const industriesRaw = response.industries as string[] | undefined;
+  const industries = industriesRaw?.map((urn) => urn.split(':').pop() ?? urn);
+
+  // Extract specialties (admin-defined tags)
+  const specialtiesRaw = response.localizedSpecialties as string[] | undefined;
+
   const result: OrganizationSummary = {
     id: organizationId,
     name: (response.localizedName as string) ?? (response.name as string) ?? '',
     vanityName: response.vanityName as string | undefined,
     description: response.localizedDescription as string | undefined,
     websiteUrl: response.localizedWebsite as string | undefined,
-    industry: response.localizedSpecialties as string | undefined,
+    industries,
+    specialties: specialtiesRaw,
     staffCount: response.staffCountRange as string | undefined,
     logoUrl: originalImage,
   };

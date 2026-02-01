@@ -142,10 +142,10 @@ export function formatPost(raw: Record<string, unknown>): PostSummary {
   return {
     id: extractIdFromUrn(id),
     urn: id,
-    author: raw.author as string,
+    author: (raw.author as string) ?? '',
     text: (raw.commentary as string) ?? '',
-    visibility: raw.visibility as string,
-    lifecycleState: raw.lifecycleState as string,
+    visibility: ((raw.visibility as string) ?? 'PUBLIC') as PostSummary['visibility'],
+    lifecycleState: ((raw.lifecycleState as string) ?? 'PUBLISHED') as PostSummary['lifecycleState'],
     createdAt: createdAt !== undefined ? epochMsToIso(createdAt) : undefined,
     publishedAt: publishedAt !== undefined ? epochMsToIso(publishedAt) : undefined,
     lastModifiedAt: lastModifiedAt !== undefined ? epochMsToIso(lastModifiedAt) : undefined,

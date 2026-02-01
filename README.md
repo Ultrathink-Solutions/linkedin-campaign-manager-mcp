@@ -164,6 +164,7 @@ If `LINKEDIN_COMMUNITY_TOKEN` is not set, the organization analytics tools will 
 - `estimate_audience` - Estimate audience size for criteria
 
 ### Organic Posts (Share on LinkedIn)
+
 - `create_post` - Create a post on your company page (text or link)
 - `list_posts` - List recent posts from a company page
 - `get_post` - Get details of a specific post
@@ -171,6 +172,7 @@ If `LINKEDIN_COMMUNITY_TOKEN` is not set, the organization analytics tools will 
 - `delete_post` - Delete a post
 
 ### Organization Analytics (Community Management API)
+
 *Requires separate `LINKEDIN_COMMUNITY_TOKEN`*
 - `get_share_statistics` - Get post engagement metrics (impressions, clicks, likes, comments, shares)
 - `get_follower_statistics` - Get follower counts and demographics

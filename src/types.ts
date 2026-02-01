@@ -307,7 +307,10 @@ export type PostLifecycleState = z.infer<typeof PostLifecycleState>;
 
 // Posts Tool Input Schemas
 export const CreatePostInputSchema = z.object({
-  organizationId: z.string().describe('The organization/company page ID (numeric, without URN prefix)'),
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID (numeric, without URN prefix)'),
   text: z.string().min(1).max(3000).describe('The post text content'),
   visibility: PostVisibility.default('PUBLIC').describe('Post visibility: PUBLIC, CONNECTIONS, or LOGGED_IN'),
   linkUrl: z.string().url().optional().describe('Optional URL to include in the post (creates link preview)'),
@@ -315,22 +318,34 @@ export const CreatePostInputSchema = z.object({
 });
 
 export const ListPostsInputSchema = z.object({
-  organizationId: z.string().describe('The organization/company page ID'),
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID'),
   count: z.number().min(1).max(100).default(10).describe('Number of posts to return (max 100)'),
   start: z.number().min(0).default(0).describe('Pagination offset'),
 });
 
 export const GetPostInputSchema = z.object({
-  postUrn: z.string().describe('The post URN (e.g., urn:li:share:123456 or urn:li:ugcPost:123456)'),
+  postUrn: z
+    .string()
+    .regex(/^urn:li:/, 'postUrn must be a LinkedIn URN')
+    .describe('The post URN (e.g., urn:li:share:123456 or urn:li:ugcPost:123456)'),
 });
 
 export const UpdatePostInputSchema = z.object({
-  postUrn: z.string().describe('The post URN to update'),
-  text: z.string().min(1).max(3000).optional().describe('Updated post text'),
+  postUrn: z
+    .string()
+    .regex(/^urn:li:/, 'postUrn must be a LinkedIn URN')
+    .describe('The post URN to update'),
+  text: z.string().min(1).max(3000).describe('Updated post text'),
 });
 
 export const DeletePostInputSchema = z.object({
-  postUrn: z.string().describe('The post URN to delete'),
+  postUrn: z
+    .string()
+    .regex(/^urn:li:/, 'postUrn must be a LinkedIn URN')
+    .describe('The post URN to delete'),
 });
 
 // Posts Response Types
@@ -339,8 +354,8 @@ export interface PostSummary {
   urn: string;
   author: string;
   text: string;
-  visibility: string;
-  lifecycleState: string;
+  visibility: PostVisibility;
+  lifecycleState: PostLifecycleState;
   createdAt?: string;
   publishedAt?: string;
   lastModifiedAt?: string;
@@ -355,21 +370,30 @@ export type TimeGranularity = z.infer<typeof TimeGranularity>;
 
 // Organization Statistics Input Schemas
 export const GetShareStatisticsInputSchema = z.object({
-  organizationId: z.string().describe('The organization/company page ID'),
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID'),
   startDate: z.string().optional().describe('Start date in YYYY-MM-DD format (optional, defaults to lifetime)'),
   endDate: z.string().optional().describe('End date in YYYY-MM-DD format (optional)'),
   granularity: TimeGranularity.default('DAY').describe('Time granularity: DAY or MONTH'),
 });
 
 export const GetFollowerStatisticsInputSchema = z.object({
-  organizationId: z.string().describe('The organization/company page ID'),
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID'),
   startDate: z.string().optional().describe('Start date in YYYY-MM-DD format (optional, defaults to lifetime)'),
   endDate: z.string().optional().describe('End date in YYYY-MM-DD format (optional)'),
   granularity: TimeGranularity.default('DAY').describe('Time granularity: DAY or MONTH'),
 });
 
 export const GetOrganizationInputSchema = z.object({
-  organizationId: z.string().describe('The organization/company page ID'),
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID'),
 });
 
 // Organization Statistics Response Types
@@ -423,7 +447,8 @@ export interface OrganizationSummary {
   vanityName?: string;
   description?: string;
   websiteUrl?: string;
-  industry?: string;
+  industries?: string[];
+  specialties?: string[];
   staffCount?: string;
   logoUrl?: string;
 }

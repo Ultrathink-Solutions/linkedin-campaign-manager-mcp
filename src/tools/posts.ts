@@ -130,17 +130,6 @@ export async function updatePost(
 ): Promise<string> {
   const { postUrn, text } = UpdatePostInputSchema.parse(input);
 
-  if (text === undefined || text === '') {
-    return JSON.stringify(
-      {
-        success: false,
-        message: 'No updates provided. Please specify text to update.',
-      },
-      null,
-      2
-    );
-  }
-
   const encodedUrn = encodeURIComponent(postUrn);
 
   await client.partialUpdate('/posts', encodedUrn, {
