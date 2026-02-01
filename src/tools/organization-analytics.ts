@@ -1,4 +1,6 @@
+import { z } from 'zod';
 import type { LinkedInClient } from '../client.js';
+import { ValidationError } from '../errors.js';
 import {
   GetShareStatisticsInputSchema,
   GetFollowerStatisticsInputSchema,
@@ -18,9 +20,16 @@ export async function getShareStatistics(
   input: unknown,
   client: LinkedInClient
 ): Promise<string> {
-  const { organizationId, startDate, endDate, granularity } = GetShareStatisticsInputSchema.parse(input);
+  const { organizationId, startDate, granularity, endDate: rawEndDate } = GetShareStatisticsInputSchema.parse(input);
+
+  // Normalize empty endDate to undefined for consistent handling
+  const endDate = rawEndDate === '' ? undefined : rawEndDate;
 
   const organizationUrn = buildUrn('organization', organizationId);
+
+  // Compute normalized end date/ms once for both query and response
+  const normalizedEndDate = endDate ?? epochMsToIso(Date.now());
+  const normalizedEndMs = endDate !== undefined ? dateToEpochMs(endDate) : Date.now();
 
   const queryParams: Record<string, unknown> = {
     q: 'organizationalEntity',
@@ -30,12 +39,11 @@ export async function getShareStatistics(
   // Add time range if specified
   if (startDate !== undefined && startDate !== '') {
     const startMs = dateToEpochMs(startDate);
-    const endMs = endDate !== undefined && endDate !== '' ? dateToEpochMs(endDate) : Date.now();
 
     queryParams.timeIntervals = {
       timeRange: {
         start: startMs,
-        end: endMs,
+        end: normalizedEndMs,
       },
       timeGranularityType: granularity,
     };
@@ -68,7 +76,7 @@ export async function getShareStatistics(
   if (startDate !== undefined && startDate !== '') {
     result.timeRange = {
       start: startDate,
-      end: endDate ?? epochMsToIso(Date.now()),
+      end: normalizedEndDate,
     };
   }
 
@@ -84,9 +92,16 @@ export async function getFollowerStatistics(
   input: unknown,
   client: LinkedInClient
 ): Promise<string> {
-  const { organizationId, startDate, endDate, granularity } = GetFollowerStatisticsInputSchema.parse(input);
+  const { organizationId, startDate, granularity, endDate: rawEndDate } = GetFollowerStatisticsInputSchema.parse(input);
+
+  // Normalize empty endDate to undefined for consistent handling
+  const endDate = rawEndDate === '' ? undefined : rawEndDate;
 
   const organizationUrn = buildUrn('organization', organizationId);
+
+  // Compute normalized end date/ms once for both query and response
+  const normalizedEndDate = endDate ?? epochMsToIso(Date.now());
+  const normalizedEndMs = endDate !== undefined ? dateToEpochMs(endDate) : Date.now();
 
   const queryParams: Record<string, unknown> = {
     q: 'organizationalEntity',
@@ -96,12 +111,11 @@ export async function getFollowerStatistics(
   // Add time range if specified
   if (startDate !== undefined && startDate !== '') {
     const startMs = dateToEpochMs(startDate);
-    const endMs = endDate !== undefined && endDate !== '' ? dateToEpochMs(endDate) : Date.now();
 
     queryParams.timeIntervals = {
       timeRange: {
         start: startMs,
-        end: endMs,
+        end: normalizedEndMs,
       },
       timeGranularityType: granularity,
     };
@@ -164,12 +178,29 @@ export async function getFollowerStatistics(
   if (startDate !== undefined && startDate !== '') {
     result.timeRange = {
       start: startDate,
-      end: endDate ?? epochMsToIso(Date.now()),
+      end: normalizedEndDate,
     };
   }
 
   return JSON.stringify(result, null, 2);
 }
+
+/**
+ * Zod schema for validating LinkedIn organization API response
+ */
+const LinkedInOrganizationResponseSchema = z.object({
+  localizedName: z.string().optional(),
+  name: z.string().optional(),
+  vanityName: z.string().optional(),
+  localizedDescription: z.string().optional(),
+  localizedWebsite: z.string().optional(),
+  industries: z.array(z.string()).optional(),
+  localizedSpecialties: z.array(z.string()).optional(),
+  staffCountRange: z.string().optional(),
+  logoV2: z.object({
+    original: z.string().optional(),
+  }).optional(),
+});
 
 /**
  * Get organization/company page details.
@@ -183,25 +214,34 @@ export async function getOrganization(
 
   const response = await client.get<Record<string, unknown>>('/organizations', organizationId);
 
-  const logoV2 = response.logoV2 as Record<string, unknown> | undefined;
-  const originalImage = logoV2?.original as string | undefined;
+  // Validate the API response with Zod schema
+  const parseResult = LinkedInOrganizationResponseSchema.safeParse(response);
+
+  if (!parseResult.success) {
+    throw new ValidationError(
+      `Invalid organization response from LinkedIn API: ${parseResult.error.message}`,
+      'organizationResponse',
+      parseResult.error.issues
+    );
+  }
+
+  const validated = parseResult.data;
+
+  // Extract logo URL from validated response
+  const originalImage = validated.logoV2?.original;
 
   // Extract industries (array of URNs like "urn:li:industry:4")
-  const industriesRaw = response.industries as string[] | undefined;
-  const industries = industriesRaw?.map((urn) => urn.split(':').pop() ?? urn);
-
-  // Extract specialties (admin-defined tags)
-  const specialtiesRaw = response.localizedSpecialties as string[] | undefined;
+  const industries = validated.industries?.map((urn) => urn.split(':').pop() ?? urn);
 
   const result: OrganizationSummary = {
     id: organizationId,
-    name: (response.localizedName as string) ?? (response.name as string) ?? '',
-    vanityName: response.vanityName as string | undefined,
-    description: response.localizedDescription as string | undefined,
-    websiteUrl: response.localizedWebsite as string | undefined,
+    name: validated.localizedName ?? validated.name ?? '',
+    vanityName: validated.vanityName,
+    description: validated.localizedDescription,
+    websiteUrl: validated.localizedWebsite,
     industries,
-    specialties: specialtiesRaw,
-    staffCount: response.staffCountRange as string | undefined,
+    specialties: validated.localizedSpecialties,
+    staffCount: validated.staffCountRange,
     logoUrl: originalImage,
   };
 

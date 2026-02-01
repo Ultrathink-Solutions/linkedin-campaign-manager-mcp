@@ -1,11 +1,15 @@
-import type {
-  AdAccountSummary,
-  CampaignSummary,
-  CampaignGroupSummary,
-  CreativeSummary,
-  MoneyAmount,
-  PostSummary,
+import { z } from 'zod';
+import {
+  PostVisibility,
+  PostLifecycleState,
+  type AdAccountSummary,
+  type CampaignSummary,
+  type CampaignGroupSummary,
+  type CreativeSummary,
+  type MoneyAmount,
+  type PostSummary,
 } from '../types.js';
+import { ValidationError } from '../errors.js';
 
 /**
  * Extract the numeric ID from a LinkedIn URN
@@ -131,23 +135,44 @@ export function buildMoneyAmount(amount: number, currencyCode: string = 'USD'): 
 }
 
 /**
+ * Zod schema for validating LinkedIn post API response
+ */
+const LinkedInPostResponseSchema = z.object({
+  id: z.string(),
+  author: z.string().optional(),
+  commentary: z.string().optional(),
+  visibility: PostVisibility.optional(),
+  lifecycleState: PostLifecycleState.optional(),
+  createdAt: z.number().optional(),
+  publishedAt: z.number().optional(),
+  lastModifiedAt: z.number().optional(),
+});
+
+/**
  * Format a raw LinkedIn post response into our summary format
  */
 export function formatPost(raw: Record<string, unknown>): PostSummary {
-  const id = raw.id as string;
-  const createdAt = raw.createdAt as number | undefined;
-  const publishedAt = raw.publishedAt as number | undefined;
-  const lastModifiedAt = raw.lastModifiedAt as number | undefined;
+  const parseResult = LinkedInPostResponseSchema.safeParse(raw);
+
+  if (!parseResult.success) {
+    throw new ValidationError(
+      `Invalid post response from LinkedIn API: ${parseResult.error.message}`,
+      'postResponse',
+      parseResult.error.issues
+    );
+  }
+
+  const validated = parseResult.data;
 
   return {
-    id: extractIdFromUrn(id),
-    urn: id,
-    author: (raw.author as string) ?? '',
-    text: (raw.commentary as string) ?? '',
-    visibility: ((raw.visibility as string) ?? 'PUBLIC') as PostSummary['visibility'],
-    lifecycleState: ((raw.lifecycleState as string) ?? 'PUBLISHED') as PostSummary['lifecycleState'],
-    createdAt: createdAt !== undefined ? epochMsToIso(createdAt) : undefined,
-    publishedAt: publishedAt !== undefined ? epochMsToIso(publishedAt) : undefined,
-    lastModifiedAt: lastModifiedAt !== undefined ? epochMsToIso(lastModifiedAt) : undefined,
+    id: extractIdFromUrn(validated.id),
+    urn: validated.id,
+    author: validated.author ?? '',
+    text: validated.commentary ?? '',
+    visibility: validated.visibility ?? 'PUBLIC',
+    lifecycleState: validated.lifecycleState ?? 'PUBLISHED',
+    createdAt: validated.createdAt !== undefined ? epochMsToIso(validated.createdAt) : undefined,
+    publishedAt: validated.publishedAt !== undefined ? epochMsToIso(validated.publishedAt) : undefined,
+    lastModifiedAt: validated.lastModifiedAt !== undefined ? epochMsToIso(validated.lastModifiedAt) : undefined,
   };
 }

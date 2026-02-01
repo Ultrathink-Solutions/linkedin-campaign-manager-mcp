@@ -111,21 +111,21 @@ Ask Claude things like:
 
 ## Configuration
 
-| Environment Variable | Required | Default | Description |
-|---------------------|----------|---------|-------------|
-| `LINKEDIN_ACCESS_TOKEN` | Yes | - | OAuth token from Ads app (rw_ads, w_organization_social) |
-| `LINKEDIN_COMMUNITY_TOKEN` | No | - | OAuth token from Analytics app (rw_organization_admin) |
-| `LINKEDIN_API_VERSION` | No | `202601` | API version in YYYYMM format |
-| `DEBUG` | No | `false` | Enable debug logging |
+| Environment Variable        | Required | Default  | Description                                              |
+| --------------------------- | -------- | -------- | -------------------------------------------------------- |
+| `LINKEDIN_ACCESS_TOKEN`     | Yes      | -        | OAuth token from Ads app (rw_ads, w_organization_social) |
+| `LINKEDIN_COMMUNITY_TOKEN`  | No       | -        | OAuth token from Analytics app (rw_organization_admin)   |
+| `LINKEDIN_API_VERSION`      | No       | `202601` | API version in YYYYMM format                             |
+| `DEBUG`                     | No       | `false`  | Enable debug logging                                     |
 
 ### Why Two Tokens?
 
 LinkedIn requires **Community Management API** to be the only product on an app. Since you also need Advertising API and Share on LinkedIn, you need two separate apps:
 
-| App | Products | Token Variable |
-|-----|----------|----------------|
-| Ultrathink Ads MCP Server | Advertising API, Share on LinkedIn | `LINKEDIN_ACCESS_TOKEN` |
-| Ultrathink Analytics | Community Management API | `LINKEDIN_COMMUNITY_TOKEN` |
+| App                       | Products                            | Token Variable            |
+| ------------------------- | ----------------------------------- | ------------------------- |
+| Ultrathink Ads MCP Server | Advertising API, Share on LinkedIn  | `LINKEDIN_ACCESS_TOKEN`   |
+| Ultrathink Analytics      | Community Management API            | `LINKEDIN_COMMUNITY_TOKEN` |
 
 If `LINKEDIN_COMMUNITY_TOKEN` is not set, the organization analytics tools will return an error explaining the setup required.
 

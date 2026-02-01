@@ -1,4 +1,5 @@
 import type { LinkedInClient } from '../client.js';
+import { ValidationError } from '../errors.js';
 import {
   CreatePostInputSchema,
   ListPostsInputSchema,
@@ -47,6 +48,13 @@ export async function createPost(
 
   // The response includes the created post ID
   const postId = response.id ?? response['x-restli-id'];
+
+  if (postId === undefined || postId === null || postId === '') {
+    throw new ValidationError(
+      'LinkedIn API did not return a post URN. The post may have been created but its ID is unknown.',
+      'postUrn'
+    );
+  }
 
   return JSON.stringify(
     {
