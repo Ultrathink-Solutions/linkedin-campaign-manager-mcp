@@ -368,14 +368,25 @@ export interface PostSummary {
 export const TimeGranularity = z.enum(['DAY', 'MONTH']);
 export type TimeGranularity = z.infer<typeof TimeGranularity>;
 
+/** Regex pattern for YYYY-MM-DD date format */
+const dateFormatRegex = /^\d{4}-\d{2}-\d{2}$/;
+
 // Organization Statistics Input Schemas
 export const GetShareStatisticsInputSchema = z.object({
   organizationId: z
     .string()
     .regex(/^\d+$/, 'organizationId must be a numeric string')
     .describe('The organization/company page ID'),
-  startDate: z.string().optional().describe('Start date in YYYY-MM-DD format (optional, defaults to lifetime)'),
-  endDate: z.string().optional().describe('End date in YYYY-MM-DD format (optional)'),
+  startDate: z
+    .string()
+    .regex(dateFormatRegex, 'startDate must be in YYYY-MM-DD format')
+    .optional()
+    .describe('Start date in YYYY-MM-DD format (optional, defaults to lifetime)'),
+  endDate: z
+    .string()
+    .regex(dateFormatRegex, 'endDate must be in YYYY-MM-DD format')
+    .optional()
+    .describe('End date in YYYY-MM-DD format (optional)'),
   granularity: TimeGranularity.default('DAY').describe('Time granularity: DAY or MONTH'),
 });
 
@@ -384,8 +395,16 @@ export const GetFollowerStatisticsInputSchema = z.object({
     .string()
     .regex(/^\d+$/, 'organizationId must be a numeric string')
     .describe('The organization/company page ID'),
-  startDate: z.string().optional().describe('Start date in YYYY-MM-DD format (optional, defaults to lifetime)'),
-  endDate: z.string().optional().describe('End date in YYYY-MM-DD format (optional)'),
+  startDate: z
+    .string()
+    .regex(dateFormatRegex, 'startDate must be in YYYY-MM-DD format')
+    .optional()
+    .describe('Start date in YYYY-MM-DD format (optional, defaults to lifetime)'),
+  endDate: z
+    .string()
+    .regex(dateFormatRegex, 'endDate must be in YYYY-MM-DD format')
+    .optional()
+    .describe('End date in YYYY-MM-DD format (optional)'),
   granularity: TimeGranularity.default('DAY').describe('Time granularity: DAY or MONTH'),
 });
 

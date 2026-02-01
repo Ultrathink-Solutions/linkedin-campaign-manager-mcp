@@ -51,8 +51,9 @@ export async function createPost(
 
   if (postId === undefined || postId === null || postId === '') {
     throw new ValidationError(
-      'LinkedIn API did not return a post URN. The post may have been created but its ID is unknown.',
-      'postUrn'
+      `LinkedIn API did not return a post URN for organization ${organizationId} (${authorUrn}). The post may have been created but its ID is unknown.`,
+      'postUrn',
+      { organizationId, authorUrn }
     );
   }
 

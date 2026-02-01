@@ -117,12 +117,18 @@ export async function getShareStatistics(
   const rawStats = elements[0];
 
   // Validate the response element with Zod schema
-  const parseResult = rawStats !== undefined
-    ? ShareStatisticsElementSchema.safeParse(rawStats)
-    : { success: true as const, data: {} };
-
-  // Use validated data or empty defaults
-  const validated = parseResult.success ? parseResult.data : {};
+  let validated: z.infer<typeof ShareStatisticsElementSchema> = {};
+  if (rawStats !== undefined) {
+    const parseResult = ShareStatisticsElementSchema.safeParse(rawStats);
+    if (!parseResult.success) {
+      throw new ValidationError(
+        `Invalid share statistics response for organization ${organizationId}: ${parseResult.error.message}`,
+        'shareStatisticsResponse',
+        parseResult.error.issues
+      );
+    }
+    validated = parseResult.data;
+  }
   const totalStats = validated.totalShareStatistics;
 
   const result: ShareStatistics = {
@@ -200,12 +206,18 @@ export async function getFollowerStatistics(
   const rawStats = elements[0];
 
   // Validate the response element with Zod schema
-  const parseResult = rawStats !== undefined
-    ? FollowerStatisticsElementSchema.safeParse(rawStats)
-    : { success: true as const, data: {} };
-
-  // Use validated data or empty defaults
-  const validated = parseResult.success ? parseResult.data : {};
+  let validated: z.infer<typeof FollowerStatisticsElementSchema> = {};
+  if (rawStats !== undefined) {
+    const parseResult = FollowerStatisticsElementSchema.safeParse(rawStats);
+    if (!parseResult.success) {
+      throw new ValidationError(
+        `Invalid follower statistics response for organization ${organizationId}: ${parseResult.error.message}`,
+        'followerStatisticsResponse',
+        parseResult.error.issues
+      );
+    }
+    validated = parseResult.data;
+  }
 
   // Extract follower counts from validated data
   const organicCount = validated.followerCounts?.organicFollowerCount ?? 0;
@@ -299,7 +311,7 @@ export async function getOrganization(
 
   if (!parseResult.success) {
     throw new ValidationError(
-      `Invalid organization response from LinkedIn API: ${parseResult.error.message}`,
+      `Invalid organization response for ${organizationId}: ${parseResult.error.message}`,
       'organizationResponse',
       parseResult.error.issues
     );
@@ -392,7 +404,7 @@ export const organizationAnalyticsTools = {
   },
   get_organization: {
     description:
-      'Get details about a LinkedIn organization/company page: name, description, website, industry, staff count, logo. Requires Community Management API access.',
+      'Get details about a LinkedIn organization/company page: name, vanity name, description, website, industries array, specialties array, staff count range, logo URL. Requires Community Management API access.',
     parameters: GetOrganizationInputSchema,
     handler: getOrganization,
   },
