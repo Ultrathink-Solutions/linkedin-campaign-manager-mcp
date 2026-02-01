@@ -32,7 +32,7 @@ const linkedInClient = createLinkedInClient(config);
 
 // Community Management client (optional, for organization analytics)
 // Uses separate token due to LinkedIn's "one product per app" restriction
-const communityClient = config.communityToken !== undefined && config.communityToken !== ''
+const communityClient = config.communityToken !== undefined && config.communityToken.trim().length > 0
   ? createLinkedInClient({ ...config, accessToken: config.communityToken })
   : null;
 
@@ -90,12 +90,16 @@ if (communityClient !== null) {
       description: `${tool.description} (⚠️ Requires LINKEDIN_COMMUNITY_TOKEN to be set)`,
       parameters: tool.parameters,
       execute: () =>
-        Promise.resolve(JSON.stringify({
-          error: 'LINKEDIN_COMMUNITY_TOKEN not configured',
-          message:
-            'Organization analytics require a separate LinkedIn app with Community Management API access. ' +
-            'Set the LINKEDIN_COMMUNITY_TOKEN environment variable with a token from that app.',
-        })),
+        Promise.resolve(JSON.stringify(
+          {
+            error: 'LINKEDIN_COMMUNITY_TOKEN not configured',
+            message:
+              'Organization analytics require a separate LinkedIn app with Community Management API access. ' +
+              'Set the LINKEDIN_COMMUNITY_TOKEN environment variable with a token from that app.',
+          },
+          null,
+          2
+        )),
     });
   }
 }
