@@ -4,6 +4,7 @@ import type {
   CampaignGroupSummary,
   CreativeSummary,
   MoneyAmount,
+  PostSummary,
 } from '../types.js';
 
 /**
@@ -126,5 +127,27 @@ export function buildMoneyAmount(amount: number, currencyCode: string = 'USD'): 
   return {
     amount: amount.toString(),
     currencyCode,
+  };
+}
+
+/**
+ * Format a raw LinkedIn post response into our summary format
+ */
+export function formatPost(raw: Record<string, unknown>): PostSummary {
+  const id = raw.id as string;
+  const createdAt = raw.createdAt as number | undefined;
+  const publishedAt = raw.publishedAt as number | undefined;
+  const lastModifiedAt = raw.lastModifiedAt as number | undefined;
+
+  return {
+    id: extractIdFromUrn(id),
+    urn: id,
+    author: raw.author as string,
+    text: (raw.commentary as string) ?? '',
+    visibility: raw.visibility as string,
+    lifecycleState: raw.lifecycleState as string,
+    createdAt: createdAt !== undefined ? epochMsToIso(createdAt) : undefined,
+    publishedAt: publishedAt !== undefined ? epochMsToIso(publishedAt) : undefined,
+    lastModifiedAt: lastModifiedAt !== undefined ? epochMsToIso(lastModifiedAt) : undefined,
   };
 }
