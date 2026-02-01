@@ -371,6 +371,23 @@ export type TimeGranularity = z.infer<typeof TimeGranularity>;
 /** Regex pattern for YYYY-MM-DD date format */
 const dateFormatRegex = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * Cross-field validation: require startDate when endDate is provided.
+ * Used with .superRefine() on date range schemas.
+ */
+function validateStartWhenEndProvided(
+  data: { startDate?: string; endDate?: string },
+  ctx: z.RefinementCtx
+): void {
+  if (data.endDate !== undefined && data.endDate !== '' && (data.startDate === undefined || data.startDate === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'startDate is required when endDate is provided',
+      path: ['startDate'],
+    });
+  }
+}
+
 // Organization Statistics Input Schemas
 export const GetShareStatisticsInputSchema = z.object({
   organizationId: z
@@ -388,7 +405,7 @@ export const GetShareStatisticsInputSchema = z.object({
     .optional()
     .describe('End date in YYYY-MM-DD format (optional)'),
   granularity: TimeGranularity.default('DAY').describe('Time granularity: DAY or MONTH'),
-});
+}).superRefine(validateStartWhenEndProvided);
 
 export const GetFollowerStatisticsInputSchema = z.object({
   organizationId: z
@@ -406,7 +423,7 @@ export const GetFollowerStatisticsInputSchema = z.object({
     .optional()
     .describe('End date in YYYY-MM-DD format (optional)'),
   granularity: TimeGranularity.default('DAY').describe('Time granularity: DAY or MONTH'),
-});
+}).superRefine(validateStartWhenEndProvided);
 
 export const GetOrganizationInputSchema = z.object({
   organizationId: z
