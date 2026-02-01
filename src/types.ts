@@ -291,3 +291,187 @@ export interface AnalyticsMetrics {
   ctr: number;
   averageCpc?: MoneyAmount;
 }
+
+// ============================================================================
+// Posts API Types (Share on LinkedIn)
+// ============================================================================
+
+export const PostVisibility = z.enum(['PUBLIC', 'CONNECTIONS', 'LOGGED_IN']);
+export type PostVisibility = z.infer<typeof PostVisibility>;
+
+export const FeedDistribution = z.enum(['MAIN_FEED', 'NONE']);
+export type FeedDistribution = z.infer<typeof FeedDistribution>;
+
+export const PostLifecycleState = z.enum(['DRAFT', 'PUBLISHED']);
+export type PostLifecycleState = z.infer<typeof PostLifecycleState>;
+
+// Posts Tool Input Schemas
+export const CreatePostInputSchema = z.object({
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID (numeric, without URN prefix)'),
+  text: z.string().min(1).max(3000).describe('The post text content'),
+  visibility: PostVisibility.default('PUBLIC').describe('Post visibility: PUBLIC, CONNECTIONS, or LOGGED_IN'),
+  linkUrl: z.string().url().optional().describe('Optional URL to include in the post (creates link preview)'),
+  isDarkPost: z.boolean().default(false).describe('If true, post will not appear on company page feed (for ads only)'),
+});
+
+export const ListPostsInputSchema = z.object({
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID'),
+  count: z.number().min(1).max(100).default(10).describe('Number of posts to return (max 100)'),
+  start: z.number().min(0).default(0).describe('Pagination offset'),
+});
+
+export const GetPostInputSchema = z.object({
+  postUrn: z
+    .string()
+    .regex(/^urn:li:/, 'postUrn must be a LinkedIn URN')
+    .describe('The post URN (e.g., urn:li:share:123456 or urn:li:ugcPost:123456)'),
+});
+
+export const UpdatePostInputSchema = z.object({
+  postUrn: z
+    .string()
+    .regex(/^urn:li:/, 'postUrn must be a LinkedIn URN')
+    .describe('The post URN to update'),
+  text: z.string().min(1).max(3000).describe('Updated post text'),
+});
+
+export const DeletePostInputSchema = z.object({
+  postUrn: z
+    .string()
+    .regex(/^urn:li:/, 'postUrn must be a LinkedIn URN')
+    .describe('The post URN to delete'),
+});
+
+// Posts Response Types
+export interface PostSummary {
+  id: string;
+  urn: string;
+  author: string;
+  text: string;
+  visibility: PostVisibility;
+  lifecycleState: PostLifecycleState;
+  createdAt?: string;
+  publishedAt?: string;
+  lastModifiedAt?: string;
+}
+
+// ============================================================================
+// Organization Analytics Types (Community Management API)
+// ============================================================================
+
+export const TimeGranularity = z.enum(['DAY', 'MONTH']);
+export type TimeGranularity = z.infer<typeof TimeGranularity>;
+
+/** Regex pattern for YYYY-MM-DD date format */
+const dateFormatRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+// Organization Statistics Input Schemas
+export const GetShareStatisticsInputSchema = z.object({
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID'),
+  startDate: z
+    .string()
+    .regex(dateFormatRegex, 'startDate must be in YYYY-MM-DD format')
+    .optional()
+    .describe('Start date in YYYY-MM-DD format (optional, defaults to lifetime)'),
+  endDate: z
+    .string()
+    .regex(dateFormatRegex, 'endDate must be in YYYY-MM-DD format')
+    .optional()
+    .describe('End date in YYYY-MM-DD format (optional)'),
+  granularity: TimeGranularity.default('DAY').describe('Time granularity: DAY or MONTH'),
+});
+
+export const GetFollowerStatisticsInputSchema = z.object({
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID'),
+  startDate: z
+    .string()
+    .regex(dateFormatRegex, 'startDate must be in YYYY-MM-DD format')
+    .optional()
+    .describe('Start date in YYYY-MM-DD format (optional, defaults to lifetime)'),
+  endDate: z
+    .string()
+    .regex(dateFormatRegex, 'endDate must be in YYYY-MM-DD format')
+    .optional()
+    .describe('End date in YYYY-MM-DD format (optional)'),
+  granularity: TimeGranularity.default('DAY').describe('Time granularity: DAY or MONTH'),
+});
+
+export const GetOrganizationInputSchema = z.object({
+  organizationId: z
+    .string()
+    .regex(/^\d+$/, 'organizationId must be a numeric string')
+    .describe('The organization/company page ID'),
+});
+
+// Organization Statistics Response Types
+export interface ShareStatistics {
+  organizationId: string;
+  /** False if no statistics data was returned from the API */
+  dataAvailable: boolean;
+  totalStats: {
+    impressions: number;
+    uniqueImpressions: number;
+    clicks: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    engagement: number;
+  };
+  timeRange?: {
+    start: string;
+    end: string;
+  };
+  timeSeries?: Array<{
+    date: string;
+    impressions: number;
+    clicks: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    engagement: number;
+  }>;
+}
+
+export interface FollowerStatistics {
+  organizationId: string;
+  /** False if no statistics data was returned from the API */
+  dataAvailable: boolean;
+  totalFollowers: number;
+  organicFollowers: number;
+  paidFollowers: number;
+  timeRange?: {
+    start: string;
+    end: string;
+  };
+  demographics?: {
+    byFunction?: Record<string, number>;
+    bySeniority?: Record<string, number>;
+    byIndustry?: Record<string, number>;
+    byLocation?: Record<string, number>;
+    byCompanySize?: Record<string, number>;
+  };
+}
+
+export interface OrganizationSummary {
+  id: string;
+  name: string;
+  vanityName?: string;
+  description?: string;
+  websiteUrl?: string;
+  industries?: string[];
+  specialties?: string[];
+  staffCount?: string;
+  logoUrl?: string;
+}

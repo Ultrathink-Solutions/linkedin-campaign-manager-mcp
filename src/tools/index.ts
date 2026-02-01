@@ -10,3 +10,5 @@ export * from './campaign-groups.js';
 export * from './creatives.js';
 export * from './analytics.js';
 export * from './targeting.js';
+export * from './posts.js';
+export * from './organization-analytics.js';

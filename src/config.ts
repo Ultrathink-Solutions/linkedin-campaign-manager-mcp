@@ -5,8 +5,10 @@ import { z } from 'zod';
  * All configuration is sourced from environment variables.
  */
 const configSchema = z.object({
-  /** LinkedIn OAuth access token with rw_ads scope */
+  /** LinkedIn OAuth access token with rw_ads and w_organization_social scopes (Ads MCP Server app) */
   accessToken: z.string().min(1, 'LINKEDIN_ACCESS_TOKEN is required'),
+  /** LinkedIn OAuth access token with rw_organization_admin scope (Analytics app - Community Management API) */
+  communityToken: z.string().optional(),
   /** LinkedIn API version in YYYYMM format (default: 202601) */
   apiVersion: z.string().regex(/^\d{6}$/, 'API version must be in YYYYMM format').default('202601'),
   /** Enable debug logging */
@@ -22,6 +24,7 @@ export type Config = z.infer<typeof configSchema>;
 export function loadConfig(): Config {
   const rawConfig = {
     accessToken: process.env.LINKEDIN_ACCESS_TOKEN,
+    communityToken: process.env.LINKEDIN_COMMUNITY_TOKEN,
     apiVersion: process.env.LINKEDIN_API_VERSION ?? '202601',
     debug: process.env.DEBUG === 'true',
   };

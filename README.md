@@ -13,8 +13,12 @@ An open-source [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) 
 ## Prerequisites
 
 1. **Node.js 18+**
-2. **LinkedIn Developer App** with Advertising API access
-3. **Access Token** with `rw_ads` and `r_ads_reporting` scopes
+2. **LinkedIn Developer App** with:
+   - **Advertising API** access (for campaign management)
+   - **Share on LinkedIn** access (for organic posting)
+3. **Access Token** with required scopes:
+   - `rw_ads`, `r_ads_reporting` - for campaign management
+   - `w_organization_social` - for posting to company pages
 
 ## Installation
 
@@ -91,19 +95,39 @@ Add to your `claude_desktop_config.json`:
 ### 4. Start Using It
 
 Ask Claude things like:
+
+**Campaign Management:**
 - "List my LinkedIn ad accounts"
 - "Show me all active campaigns in account 123456"
 - "Create a new website visits campaign with $50/day budget"
 - "Get performance analytics for campaign X for the last 7 days"
 - "Pause all campaigns in the Summer Sale campaign group"
 
+**Organic Posting (requires Share on LinkedIn access):**
+- "Post to our company page: 'Excited to announce our new AI assessment tool!'"
+- "List recent posts from our company page"
+- "Create a dark post for our ad campaign" (won't show on page feed)
+- "Delete the post from yesterday"
+
 ## Configuration
 
-| Environment Variable | Required | Default | Description |
-|---------------------|----------|---------|-------------|
-| `LINKEDIN_ACCESS_TOKEN` | Yes | - | OAuth access token with rw_ads scope |
-| `LINKEDIN_API_VERSION` | No | `202601` | API version in YYYYMM format |
-| `DEBUG` | No | `false` | Enable debug logging |
+| Environment Variable        | Required | Default  | Description                                              |
+| --------------------------- | -------- | -------- | -------------------------------------------------------- |
+| `LINKEDIN_ACCESS_TOKEN`     | Yes      | -        | OAuth token from Ads app (rw_ads, w_organization_social) |
+| `LINKEDIN_COMMUNITY_TOKEN`  | No       | -        | OAuth token from Analytics app (rw_organization_admin)   |
+| `LINKEDIN_API_VERSION`      | No       | `202601` | API version in YYYYMM format                             |
+| `DEBUG`                     | No       | `false`  | Enable debug logging                                     |
+
+### Why Two Tokens?
+
+LinkedIn requires **Community Management API** to be the only product on an app. Since you also need Advertising API and Share on LinkedIn, you need two separate apps:
+
+| App                       | Products                            | Token Variable            |
+| ------------------------- | ----------------------------------- | ------------------------- |
+| Ultrathink Ads MCP Server | Advertising API, Share on LinkedIn  | `LINKEDIN_ACCESS_TOKEN`   |
+| Ultrathink Analytics      | Community Management API            | `LINKEDIN_COMMUNITY_TOKEN` |
+
+If `LINKEDIN_COMMUNITY_TOKEN` is not set, the organization analytics tools will return an error explaining the setup required.
 
 ## Available Tools
 
@@ -138,6 +162,21 @@ Ask Claude things like:
 - `list_targeting_facets` - List available targeting dimensions
 - `search_targeting_entities` - Search for targeting values
 - `estimate_audience` - Estimate audience size for criteria
+
+### Organic Posts (Share on LinkedIn)
+
+- `create_post` - Create a post on your company page (text or link)
+- `list_posts` - List recent posts from a company page
+- `get_post` - Get details of a specific post
+- `update_post` - Update post text content
+- `delete_post` - Delete a post
+
+### Organization Analytics (Community Management API)
+
+*Requires separate `LINKEDIN_COMMUNITY_TOKEN`*
+- `get_share_statistics` - Get post engagement metrics (impressions, clicks, likes, comments, shares)
+- `get_follower_statistics` - Get follower counts and demographics
+- `get_organization` - Get company page details
 
 ## Token Expiration
 
@@ -179,17 +218,20 @@ npm run typecheck
 
 ```
 src/
-├── index.ts          # MCP server entry point
-├── config.ts         # Configuration loading
+├── index.ts          # MCP server entry point (dual-client support)
+├── config.ts         # Configuration loading (supports two tokens)
 ├── client.ts         # LinkedIn API client wrapper
 ├── types.ts          # TypeScript types & Zod schemas
 ├── errors.ts         # Custom error classes
 ├── tools/            # MCP tool implementations
 │   ├── accounts.ts
 │   ├── campaigns.ts
+│   ├── campaign-groups.ts
 │   ├── creatives.ts
-│   ├── analytics.ts
-│   └── targeting.ts
+│   ├── analytics.ts          # Ad campaign analytics
+│   ├── targeting.ts
+│   ├── posts.ts               # Organic posting (Share on LinkedIn)
+│   └── organization-analytics.ts  # Post stats, followers (Community Mgmt API)
 └── utils/
     └── formatters.ts # Response formatting
 ```
